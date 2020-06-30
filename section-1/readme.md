@@ -5,7 +5,9 @@
 - methods communicate with objects 
 - object has own private state only modifiable via methods
 - every object is instance of a class (instead of prototypical)
-- class determines object behaviour 
+- class determines object behaviour
+
+when we define a function globaly in ruby this means it gets added to the the super object from which all other objects descent 
 
 > classes and methods in ruby 
 
@@ -23,8 +25,8 @@ end
 name = Name.new
 ```
 
-**self** key-word = current object whose method is executing
---> we can return object itself within it's methods to 
+>**self** key-word = current object >whose method is executing
+>--> we can return object itself within >it's methods to 
 
 ```ruby
 # e.m() e is an expression m is some method
@@ -56,7 +58,8 @@ machine.m1.m2.m3 # hi welcome bye
 # e.m() e is an expression m is some method
 class A =
     def m1 
-        @foo = 0 # if it has a foo var it will change it to zero else it will create one and initialize it to zero
+        @foo = 0 
+        # if it has a foo var it will change it to zero else it will create one and initialize it to zero
     end
 end
 ```
@@ -84,7 +87,7 @@ machine = Textmachine.new("hi")
 
 - class variables = shared by entire class accessible via all instances
 - class constants = publicly accesible outside class as well 
-- class mehtods
+- class methods
 ```ruby
 # e.m() e is an expression m is some method
 class A =
@@ -148,7 +151,7 @@ foo ("hi") { |msg| puts msg}
 ```ruby
 a = [1,2,3,10]
 # c = a.map {|x| {|y| x >= y}} won't work because proc =/= object
-c = a.map {|x| lambda {|y| x >= y}} # will work
+c = a.map {|x| (lambda {|y| x >= y})} # will work
 
 c[2].call 17
 j = c.count {|x| x.call(1)}
@@ -156,3 +159,79 @@ j = c.count {|x| x.call(1)}
 puts "The value of x is #{j}" # 3
 ```
 
+## reflection 
+
+methods defined on all methods in ruby which inform us about the object 
+
+`methods` or
+`class`
+
+**reflection** = learn things about the program while the program is running
+
+## arrays
+
+```ruby
+a = [1, 1, 2]
+b = a # b is an alias for 
+c = b + [] # c is new object plus returns new array 
+```
+
+## subclassing
+
+each class definition has a superclass
+which passes on methods to it's subclass
+--> these can however be overriden in within the subclass definition 
+
+```ruby
+aClass.is_a? Object # least strict will check for superclasses two
+aClass.instance_of? Object # moststrict will check for most specfic class
+```
+
+## dynamic dispatching
+
+**overriding can make a method defined in the superclass call a method in the subclass**
+
+
+```ruby
+class A 
+    def hiFrom 
+        location = getLocation
+        puts "hi from #{location}"
+    end
+    def getLocation 
+        "A"
+    end
+end
+
+class B < A
+    def getLocation 
+        "B"
+    end
+end
+
+b = B.new 
+b.hiFrom # prints out hi from b this is dynamic dispatching big difference from closure where body would not have adapted
+```
+
+## how we lookup stuff
+
+- local variable lookup -- like ML or racket
+
+-- different
+
+- instance variable lookup
+- class variable lookup
+- method lookup 
+
+whenever a method is executing we have a self referring to the current object 
+
+* instance var found using obj bound to self  
+* class var found using obj bound to self.class
+* method lookup `e0.m(e1, ... , en)`
+    
+    1. all expressions evaluated to objects
+    2. say A is class of obj0
+    3. if m defined in A use that m else look up in superclass
+    4. **evaluate body of method with self bound to obj0** 
+    
+> we will map self to the receiver of the method thus obj0 not always the class that defined the method  

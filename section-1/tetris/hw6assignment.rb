@@ -8,8 +8,10 @@
 
 
 # 2. In your game, instead of the pieces being randomly (and uniformly) chosen from the 7 classic pieces,
-# the pieces are randomly (and uniformly) chosen from 10 pieces. They are the classic 7 and these 3:
-# 22222 22222 222
+# the pieces are randomly (and uniformly) chosen from 10 pieces. They are the classic 7 and these 
+
+# 
+
 
 class MyPiece < Piece
   
@@ -17,28 +19,45 @@ class MyPiece < Piece
       super(point_array, board)
     end
 
-         # The constant All_My_Pieces should be declared here
-    All_My_Pieces = [[[[0, 0], [1, 0], [0, 1], [1, 1]]],  # square (only needs one)
-         rotations([[0, 0], [-1, 0], [1, 0], [0, -1]]), # T
-         [[[0, 0], [-1, 0], [1, 0], [2, 0]], # long (only needs two)
-         [[0, 0], [0, -1], [0, 1], [0, 2]]],
-         rotations([[0, 0], [0, -1], [0, 1], [1, 1]]), # L
-         rotations([[0, 0], [0, -1], [0, 1], [-1, 1]]), # inverted L
-         rotations([[0, 0], [-1, 0], [0, -1], [1, -1]]), # S
-         rotations([[0, 0], [1, 0], [0, -1], [-1, -1]]),
-         [[0, 0], [1, 0], [0, 1], [1, 1]]] # Z
-
-    def self.next_piece (board)
-      MyPiece.new(All_My_Pieces.sample, board)
+    # adding the three pieces hook longer and square with extra
+    All_My_Pieces = All_Pieces + 
+                    [[[[0, 0], [-2, 0], [-1, 0], [1, 0], [2, 0]], # very long (only needs two)
+                    [[0, 0], [0, -2], [0, -1], [0, 1], [0, 2]]],
+                    rotations([[0, 0], [0, 1], [1, 1]]), # Small L
+                    rotations([[0, 0], [-1, 0], [0, -1], [0, 1], [-1, 1]]) # Square with jut
+                    ]
+                    
+    # general -- make sure we use MyPiece and All_My_Pieces
+    def self.next_piece (board, cheating=false)
+      if cheating
+        MyPiece.new([[[0, 0]]], board)
+      else
+        MyPiece.new(All_My_Pieces.sample, board)
+      end
     end
-end
-  
+  end
+
 class MyBoard < Board
     def initialize (game)
       super(game)
       @current_block = MyPiece.next_piece(self)
+      @cheating = false
     end
 
+    # 2 -- changed the range to change depending on amount of blocks 
+    def store_current
+      locations = @current_block.current_rotation
+      displacement = @current_block.position
+      (0..(locations.size-1)).each{|index| 
+        current = locations[index];
+        @grid[current[1]+displacement[1]][current[0]+displacement[0]] = 
+        @current_pos[index]
+      }
+      remove_filled
+      @delay = [@delay - 2, 80].max
+    end
+
+    # 1 -- ensure full rotation
     def rotate_full
       if !game_over? and @game.is_running?
         @current_block.move(0, 0, 2)
@@ -46,18 +65,38 @@ class MyBoard < Board
       draw
     end
 
+     # 3 -- cheat check only cheat if score above 100 and not currently 
+     # using cheat block
+    def cheat
+      if score >= 100 && !@cheating
+        @score -= 100
+        @cheating = true 
+      end
+    end
+
+    def cheating
+      @cheating = true 
+    end
+
     def next_piece
-      @current_block = MyPiece.next_piece(self)
+      if @cheating
+        @current_block = MyPiece.next_piece(self, true)
+        @cheating = false
+      else
+        @current_block = MyPiece.next_piece(self)
+      end    
       @current_pos = nil
     end
-end
+
+
+  end
   
 class MyTetris < Tetris
     def initialize
       super
     end
 
-    # make sure we use myboard instead of board on setup
+    # general -- make sure we use myboard instead of board on setup
     def set_board
       @canvas = TetrisCanvas.new
       @board = MyBoard.new(self)
@@ -66,25 +105,9 @@ class MyTetris < Tetris
       @board.draw
     end
 
-    
-
     def key_bindings 
       super 
-      # invoke in parent method with the same name 
-      # as the one where this super is called in
       @root.bind('u', proc {@board.rotate_full})
+      @root.bind('c', proc {@board.cheat})
     end
-
-
-
 end
-
-
-
-# The initial rotation for each piece is also chosen randomly.
-# 3. In your game, the player can press the ’c’ key to cheat: If the score is less than 100, nothing happens.
-# Else the player loses 100 points (cheating costs you) and the next piece that appears will be:
-# 2
-# The piece after is again chosen randomly from the 10 above (unless, of course, the player hits ’c’ while
-# the \cheat piece" is falling and still has a large enough score). Hitting ’c’ multiple times while a single
-# piece is falling should behave no differently than hitting it once.

@@ -48,8 +48,8 @@ class Piece
   # class array holding all the pieces and their rotations
   All_Pieces = [[[[0, 0], [1, 0], [0, 1], [1, 1]]],  # square (only needs one)
     rotations([[0, 0], [-1, 0], [1, 0], [0, -1]]), # T
-    [[[0, 0], [-1, 0], [1, 0], [2, 0]], # long (only needs two)
-    [[0, 0], [0, -1], [0, 1], [0, 2]]],
+              [[[0, 0], [-1, 0], [1, 0], [2, 0]], # long (only needs two)
+              [[0, 0], [0, -1], [0, 1], [0, 2]]],
     rotations([[0, 0], [0, -1], [0, 1], [1, 1]]), # L
     rotations([[0, 0], [0, -1], [0, 1], [-1, 1]]), # inverted L
     rotations([[0, 0], [-1, 0], [0, -1], [1, -1]]), # S
@@ -87,13 +87,13 @@ class Piece
     # to nil) by altering the intended rotation so that it stays 
     # within the bounds of the rotation array
     moved = true
-    potential = @all_rotations[(@rotation_index + delta_rotation) % @all_rotations.size]
+    potentialRotation = @all_rotations[(@rotation_index + delta_rotation) % @all_rotations.size]
     # for each individual block in the piece, checks if the intended move
     # will put this block in an occupied space
-    potential.each{|posns| 
+    potentialRotation.each{|posns| 
       if !(@board.empty_at([posns[0] + delta_x + @base_position[0],
                             posns[1] + delta_y + @base_position[1]]));
-        moved = false;  
+        moved = false;
       end
     }
     if moved
@@ -229,6 +229,7 @@ class Board
     displacement = @current_block.position
     (0..3).each{|index| 
       current = locations[index];
+      puts "current "
       @grid[current[1]+displacement[1]][current[0]+displacement[0]] = 
       @current_pos[index]
     }

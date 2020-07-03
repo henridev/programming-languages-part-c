@@ -1,31 +1,4 @@
-(* University of Washington, Programming Languages, Homework 7, hw7.sml 
-   (See also Ruby code.)
-*)
 
-(* 
-
-Semantics
--  noPoint = empty set points
--  Point = tuple with x and y 
--  Line = inifinite line (slope, intercept) can not be vertical 
--  VerticaLine = infinite vertical line in plane x is it's vertical position 
--  LineSegment = finite line segment with end-points x1,y1 to x2,y2
--  Intersect = recursive tuple with subs geom_expressions 
-                eval subs in same env 
-                    results:
-                        * no point = parallel lines
-                        * point = lines with intersect 
-                        * line = lines with equal slope and intercept 
-- Let = evaluate e1 and bound to string then e2 is evaluated in env containing e1
-- Var = to use variables in env lookup via a string
-- Shift = not value gets deltaX / deltaY / e
- *)
-
-(* expressions in a little language for 2D geometry objects
-   values: points, lines, vertical lines, line segments
-   other expressions: intersection of two expressions, lets, variables, 
-                      (shifts added by you)
-*)
 datatype geom_exp = 
            NoPoints
 	 | Point of real * real 
@@ -40,21 +13,17 @@ datatype geom_exp =
 exception BadProgram of string
 exception Impossible of string
 
-(* helper functions for comparing real numbers since rounding means
-   we should never compare for equality *)
+
 
 val epsilon = 0.00001
 
 fun real_close (r1,r2) = 
     (Real.abs (r1 - r2)) < epsilon
 
-(* notice curried *)
+
 fun real_close_point (x1,y1) (x2,y2) = 
     real_close(x1,x2) andalso real_close(y1,y2)
 
-(* helper function to return the Line or VerticalLine containing 
-   points (x1,y1) and (x2,y2). Actually used only when intersecting 
-   line segments, but might be generally useful *)
 fun two_points_to_line (x1,y1,x2,y2) = 
     if real_close(x1,x2)
     then VerticalLine x1
@@ -66,11 +35,7 @@ fun two_points_to_line (x1,y1,x2,y2) =
 	    Line(m,b)
 	end
 
-(* helper function for interpreter: return value that is the intersection
-   of the arguments: 25 cases because there are 5 kinds of values, but
-   many cases can be combined, especially because intersection is commutative.
-   Do *not* call this function with non-values (e.g., shifts or lets)
- *)
+
 fun intersect (v1,v2) =
     case (v1,v2) of
 	
@@ -190,16 +155,6 @@ fun intersect (v1,v2) =
 
 
 
-(* interpreter for our language: 
-   * takes a geometry expression and returns a geometry value
-   * for simplicity we have the top-level function take an environment,
-     (which should be [] for the whole program
-   * we assume the expression e has already been "preprocessed" as described
-     in the homework assignment: 
-         * line segments are not actually points (endpoints not real close)
-         * lines segment have left (or, if vertical, bottom) coordinate first
-*)
-
 
 fun eval_prog (e,env) =
     case e of
@@ -214,32 +169,14 @@ fun eval_prog (e,env) =
 	   | SOME (_,v) => v)
       | Let(s,e1,e2) => eval_prog (e2, ((s, eval_prog(e1,env)) :: env))
       | Intersect(e1,e2) => intersect(eval_prog(e1,env), eval_prog(e2, env))
-	  | Shift(dx, dy, e1) =>
-			case eval_prog(e1, env) of
-				NoPoints => NoPoints
-				| Point(x, y) => Point(x + dx, y + dy)
-				| Line(m, b) => Line(m, b + dy - m * dx)
-				| VerticalLine(x) => VerticalLine(x + dx)
-				| LineSegment(x1, y1, x2, y2)
-					=> LineSegment(x1 + dx, y1 + dy, x2 + dx, y2 + dy)
+      | Shift(dx, dy, e1) =>
+        case eval_prog(e1, env) of
+            NoPoints => NoPoints
+          | Point(x, y) => Point(x + dx, y + dy)
+          | Line(m, b) => Line(m, b + dy - m * dx)
+          | VerticalLine(x) => VerticalLine(x + dx)
+          | LineSegment(x1, y1, x2, y2) => LineSegment(x1 + dx, y1 + dy, x2 + dx, y2 + dy)
 
-
-(* CHANGE: Add function preprocess_prog of type geom_exp -> geom_exp *)
-(* fun preprocess_prog (LineSegment(bXstart,bYstart,bXend,bYend)) = 
-        if real_close_point (bXstart,bYstart) (bXend,bYend) 
-        then Point(bXend,bYend) 
-        else if  real_close(bXstart, bXend) 
-             then (if  bYstart > bYend 
-			 					then LineSegment(bXend,bYend,bXstart,bYstart)
-								else LineSegment(bXstart,bYstart,bXend,bYend))
-			 else if (bXstart > bXend)
-			 then LineSegment(bXend,bYend,bXstart,bYstart)
-			 else e
-  | preprocess_prog (Shift(deltaX, deltaY, e1) ) = (Shift(deltaX, deltaY, preprocess_prog(e1)) )
-  | preprocess_prog (Let(s,e1,e2) ) = (Let(s, preprocess_prog(e1), preprocess_prog(e2)) )
-  | preprocess_prog (Intersect(e1,e2)) = (Intersect(preprocess_prog(e1), preprocess_prog(e2)) )
-  | preprocess_prog (e) = e
-     *)
 
 fun preprocess_prog e =
 	case e of

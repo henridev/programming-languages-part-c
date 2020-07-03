@@ -186,3 +186,7 @@ class Mult < Exp
     Mult.new(e1.noNegConstants,e2.noNegConstants)
   end
 end
+
+
+puts Add.new(MyString.new("hello world - "), Int.new(4)).eval.toString
+# will call addString from Int instance -- message will get sent from in myString
